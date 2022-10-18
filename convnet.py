@@ -1,13 +1,11 @@
 import torch
+import torch.nn as nn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 import os
 
-
-
-from torch import nn
 from torch.utils import data
 from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets
