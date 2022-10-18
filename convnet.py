@@ -81,8 +81,10 @@ def validation_convnet(dataloader, model, loss_fn, device):
         for X, y in dataloader:
             X, y = X.to(device), y.to(device)
             pred = model(X)
+            m = torch.sigmoid(pred)
+            bin_pred = torch.round(m).transpose(0,1)
             test_loss += loss_fn(pred, y.unsqueeze(1).float()).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+            correct += (bin_pred == y).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
     print(f"Validation Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
@@ -97,8 +99,11 @@ def test_convnet(dataloader, model, loss_fn, device):
         for X, y in dataloader:
             X, y = X.to(device), y.to(device)
             pred = model(X)
+            m = torch.sigmoid(pred)
+            bin_pred = torch.round(m).transpose(0,1)
+
             test_loss += loss_fn(pred, y.unsqueeze(1).float()).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+            correct += (bin_pred == y).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
