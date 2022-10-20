@@ -51,25 +51,49 @@ class ConvNet(nn.Module):
 
 
 
-def train_convnet(dataloader, model, loss_fn, optimizer, device):
-  size = len(dataloader.dataset)
-  model.train()
-  for batch, (X, y) in enumerate(dataloader):
-      # Make sure the tensors are set to be processed by the correct device
-      X, y = X.to(device), y.to(device)
+def train_convnet(dataloader, model, loss_fn, optimizer, device, epochs, restart):
+    # Load the model from the latest trained epoch  
+    if restart:
+        with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
+            f.write(str(0))
+  
+    with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt") as f:
+        start_epoch = int(f.readlines()[0])
+    
+    load_model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(start_epoch)
+    model.load_state_dict(torch.load(load_model_path))
 
-      # Compute prediction error
-      pred = model(X)
-      loss = loss_fn(pred, y.unsqueeze(1).float())
-      # Backpropagation
-      # This prevents gradients from adding up
-      optimizer.zero_grad()
-      loss.backward()
-      optimizer.step()
 
-      if batch % 100 == 0:
-          loss, current = loss.item(), batch * len(X)
-          print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+    size = len(dataloader.dataset)
+    model.train()
+    
+    # Train up untill the required 
+    for t in range(start_epoch, epochs):
+        print(f"Epoch {t+1}\n-------------------------------")
+        if t > 0:
+            
+        for batch, (X, y) in enumerate(dataloader):
+            # Make sure the tensors are set to be processed by the correct device
+            X, y = X.to(device), y.to(device)
+
+            # Compute prediction error
+            pred = model(X)
+            loss = loss_fn(pred, y.unsqueeze(1).float())
+            # Backpropagation
+            # This prevents gradients from adding up
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            if batch % 100 == 0:
+                loss, current = loss.item(), batch * len(X)
+                print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+    model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(t+1)
+    torch.save(model.state_dict(), model_path)
+
+    with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
+      f.write(str(t+1))
 
 
 def validation_convnet(dataloader, model, loss_fn, device):
