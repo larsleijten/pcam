@@ -60,8 +60,9 @@ def train_convnet(dataloader, model, loss_fn, optimizer, device, epochs, restart
     with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt") as f:
         start_epoch = int(f.readlines()[0])
     
-    load_model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(start_epoch)
-    model.load_state_dict(torch.load(load_model_path))
+    if start_epoch > 0:
+        load_model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(start_epoch)
+        model.load_state_dict(torch.load(load_model_path))
 
 
     size = len(dataloader.dataset)
