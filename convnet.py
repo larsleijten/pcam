@@ -65,13 +65,13 @@ def train_convnet(dataloader, model, loss_fn, optimizer, device, epochs, restart
         model.load_state_dict(torch.load(load_model_path))
 
 
-    size = len(dataloader.dataset)
-    model.train()
+    
     
     # Train up untill the required 
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-            
+        size = len(dataloader.dataset)
+        model.train()    
         for batch, (X, y) in enumerate(dataloader):
             # Make sure the tensors are set to be processed by the correct device
             X, y = X.to(device), y.to(device)
