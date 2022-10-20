@@ -49,7 +49,7 @@ class ConvNet(nn.Module):
     #p = nn.Sigmoid(logit)
     return logit
 
-def fit_convnet(train_dataloader, model, loss_fn, optimizer, device, epochs, restart, validation_data_loader):
+def fit_convnet(train_data_loader, model, loss_fn, optimizer, device, epochs, restart, validation_data_loader):
     # Load the model from the latest trained epoch  
     if restart:
         with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
@@ -64,7 +64,8 @@ def fit_convnet(train_dataloader, model, loss_fn, optimizer, device, epochs, res
 
     # Train up untill the required epoch
     for t in range(start_epoch, epochs):
-        train_epoch()    
+        print(f"Epoch {t+1}\n-------------------------------")
+        train_epoch(train_data_loader, model, loss_fn, optimizer, device)    
         model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(t+1)
         torch.save(model.state_dict(), model_path)
 
@@ -74,13 +75,29 @@ def fit_convnet(train_dataloader, model, loss_fn, optimizer, device, epochs, res
         validation(validation_data_loader, model, loss_fn, device)
 
 
+def fit_ft_resnet(train_data_loader, model, loss_fn, optimizer, device, epochs, restart, validation_data_loader):
+    if restart:
+        with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_last_epoch.txt", 'w') as f:
+            f.write(str(0))
+  
+    with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_last_epoch.txt") as f:
+        start_epoch = int(f.readlines()[0])
+    
+    if start_epoch > 0:
+        load_model_path = "/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_epoch_" + str(start_epoch)
+        model.load_state_dict(torch.load(load_model_path))
 
+    # Train up untill the required epoch
+    for t in range(start_epoch, epochs):
+        print(f"Epoch {t+1}\n-------------------------------")
+        train_epoch(train_data_loader, model, loss_fn, optimizer, device)    
+        model_path = "/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_epoch_" + str(t+1)
+        torch.save(model.state_dict(), model_path)
 
-   
+        with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_last_epoch.txt", 'w') as f:
+            f.write(str(t+1))
 
-
-def fit_ft_resnet(train_dataloader, model, loss_fn, optimizer, device, epochs, restart, validation_data_loader):
-    print("b")
+        validation(validation_data_loader, model, loss_fn, device)
 
 def train_epoch(dataloader, model, loss_fn, optimizer, device):
     size = len(dataloader.dataset)
