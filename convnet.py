@@ -70,7 +70,6 @@ def train_convnet(dataloader, model, loss_fn, optimizer, device, epochs, restart
     # Train up untill the required 
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        if t > 0:
             
         for batch, (X, y) in enumerate(dataloader):
             # Make sure the tensors are set to be processed by the correct device
