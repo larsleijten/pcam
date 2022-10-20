@@ -49,7 +49,58 @@ class ConvNet(nn.Module):
     #p = nn.Sigmoid(logit)
     return logit
 
+def fit_convnet(train_dataloader, model, loss_fn, optimizer, device, epochs, restart, validation_data_loader):
+    # Load the model from the latest trained epoch  
+    if restart:
+        with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
+            f.write(str(0))
+  
+    with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt") as f:
+        start_epoch = int(f.readlines()[0])
+    
+    if start_epoch > 0:
+        load_model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(start_epoch)
+        model.load_state_dict(torch.load(load_model_path))
 
+    # Train up untill the required epoch
+    for t in range(start_epoch, epochs):
+        train_epoch()    
+        model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(t+1)
+        torch.save(model.state_dict(), model_path)
+
+        with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
+            f.write(str(t+1))
+
+        validation(validation_data_loader, model, loss_fn, device)
+
+
+
+
+   
+
+
+def fit_ft_resnet(train_dataloader, model, loss_fn, optimizer, device, epochs, restart, validation_data_loader):
+    print("b")
+
+def train_epoch(dataloader, model, loss_fn, optimizer, device):
+    size = len(dataloader.dataset)
+    model.train()    
+    for batch, (X, y) in enumerate(dataloader):
+        # Make sure the tensors are set to be processed by the correct device
+        X, y = X.to(device), y.to(device)
+
+        # Compute prediction error
+        pred = model(X)
+        loss = loss_fn(pred, y.unsqueeze(1).float())
+        # Backpropagation
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if batch % 100 == 0:
+            loss, current = loss.item(), batch * len(X)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            
 
 def train_convnet(dataloader, model, loss_fn, optimizer, device, epochs, restart):
     # Load the model from the latest trained epoch  
@@ -64,10 +115,7 @@ def train_convnet(dataloader, model, loss_fn, optimizer, device, epochs, restart
         load_model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(start_epoch)
         model.load_state_dict(torch.load(load_model_path))
 
-
-    
-    
-    # Train up untill the required 
+    # Train up untill the required epoch
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         size = len(dataloader.dataset)
@@ -80,7 +128,6 @@ def train_convnet(dataloader, model, loss_fn, optimizer, device, epochs, restart
             pred = model(X)
             loss = loss_fn(pred, y.unsqueeze(1).float())
             # Backpropagation
-            # This prevents gradients from adding up
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -89,14 +136,14 @@ def train_convnet(dataloader, model, loss_fn, optimizer, device, epochs, restart
                 loss, current = loss.item(), batch * len(X)
                 print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
-    model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(t+1)
-    torch.save(model.state_dict(), model_path)
+        model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(t+1)
+        torch.save(model.state_dict(), model_path)
 
-    with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
-      f.write(str(t+1))
+        with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
+            f.write(str(t+1))
 
 
-def validation_convnet(dataloader, model, loss_fn, device):
+def validation(dataloader, model, loss_fn, device):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     model.eval()
