@@ -72,7 +72,7 @@ class Experiment():
         fit_resnet(train_data_loader, resnet50, loss_fn, resnet50_optimizer, device, self.num_epochs, self.restart, validation_data_loader, self.train_loss, self.validation_loss, self.train_accuracy, self.validation_accuracy)
 
 
-def fit_convnet(train_data_loader, model, loss_fn, conv_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
+def fit_convnet(train_data_loader, conv_model, loss_fn, conv_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
     # Load the model from the latest trained epoch  
     if restart:
         with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
@@ -83,20 +83,20 @@ def fit_convnet(train_data_loader, model, loss_fn, conv_optimizer, device, epoch
     
     if start_epoch > 0:
         load_model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(start_epoch)
-        model.load_state_dict(torch.load(load_model_path))
+        conv_model.load_state_dict(torch.load(load_model_path))
 
     # Train up untill the required epoch
     print("Convnet")
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        t_loss, t_accuracy = train_epoch(train_data_loader, model, loss_fn, conv_optimizer, device)    
+        t_loss, t_accuracy = train_epoch(train_data_loader, conv_model, loss_fn, conv_optimizer, device)    
         model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(t+1)
-        torch.save(model.state_dict(), model_path)
+        torch.save(conv_model.state_dict(), model_path)
 
         with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
             f.write(str(t+1))
     
-        v_loss, v_accuracy = validation(validation_data_loader, model, loss_fn, device)
+        v_loss, v_accuracy = validation(validation_data_loader, conv_model, loss_fn, device)
         train_loss['convnet'][t] = t_loss
         validation_loss['convnet'][t] = v_loss
         train_accuracy['convnet'][t] = t_accuracy
@@ -107,7 +107,7 @@ def fit_convnet(train_data_loader, model, loss_fn, conv_optimizer, device, epoch
         validation_accuracy.to_csv("/content/gdrive/My Drive/colab/results/validation_accuracy.csv")
 
 
-def fit_ft_resnet(train_data_loader, model, loss_fn, ft_resnet50_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
+def fit_ft_resnet(train_data_loader, ft_resnet50, loss_fn, ft_resnet50_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
     if restart:
         with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_last_epoch.txt", 'w') as f:
             f.write(str(0))
@@ -117,20 +117,20 @@ def fit_ft_resnet(train_data_loader, model, loss_fn, ft_resnet50_optimizer, devi
     
     if start_epoch > 0:
         load_model_path = "/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_epoch_" + str(start_epoch)
-        model.load_state_dict(torch.load(load_model_path))
+        ft_resnet50.load_state_dict(torch.load(load_model_path))
 
     # Train up untill the required epoch
     print("Finetune ResNet50")
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        t_loss, t_accuracy = train_epoch(train_data_loader, model, loss_fn, ft_resnet50_optimizer, device)    
+        t_loss, t_accuracy = train_epoch(train_data_loader, ft_resnet50, loss_fn, ft_resnet50_optimizer, device)    
         model_path = "/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_epoch_" + str(t+1)
-        torch.save(model.state_dict(), model_path)
+        torch.save(ft_resnet50.state_dict(), model_path)
 
         with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_last_epoch.txt", 'w') as f:
             f.write(str(t+1))
 
-        v_loss, v_accuracy = validation(validation_data_loader, model, loss_fn, device)
+        v_loss, v_accuracy = validation(validation_data_loader, ft_resnet50, loss_fn, device)
         train_loss['ft_resnet'][t] = t_loss
         validation_loss['ft_resnet'][t] = v_loss
         train_accuracy['ft_resnet'][t] = t_accuracy
@@ -141,7 +141,7 @@ def fit_ft_resnet(train_data_loader, model, loss_fn, ft_resnet50_optimizer, devi
         validation_accuracy.to_csv("/content/gdrive/My Drive/colab/results/validation_accuracy.csv")
 
 
-def fit_pt_resnet(train_data_loader, model, loss_fn, pt_resnet50_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
+def fit_pt_resnet(train_data_loader, pt_resnet50, loss_fn, pt_resnet50_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
     if restart:
         with open("/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_last_epoch.txt", 'w') as f:
             f.write(str(0))
@@ -151,20 +151,20 @@ def fit_pt_resnet(train_data_loader, model, loss_fn, pt_resnet50_optimizer, devi
     
     if start_epoch > 0:
         load_model_path = "/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_epoch_" + str(start_epoch)
-        model.load_state_dict(torch.load(load_model_path))
+        pt_resnet50.load_state_dict(torch.load(load_model_path))
 
     # Train up untill the required epoch
     print("Retrain pretrained ResNet50")
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        t_loss, t_accuracy = train_epoch(train_data_loader, model, loss_fn, pt_resnet50_optimizer, device)    
+        t_loss, t_accuracy = train_epoch(train_data_loader, pt_resnet50, loss_fn, pt_resnet50_optimizer, device)    
         model_path = "/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_epoch_" + str(t+1)
-        torch.save(model.state_dict(), model_path)
+        torch.save(pt_resnet50.state_dict(), model_path)
 
         with open("/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_last_epoch.txt", 'w') as f:
             f.write(str(t+1))
 
-        v_loss, v_accuracy = validation(validation_data_loader, model, loss_fn, device)
+        v_loss, v_accuracy = validation(validation_data_loader, pt_resnet50, loss_fn, device)
         train_loss['pt_resnet'][t] = t_loss
         validation_loss['pt_resnet'][t] = v_loss
         train_accuracy['pt_resnet'][t] = t_accuracy
@@ -174,7 +174,7 @@ def fit_pt_resnet(train_data_loader, model, loss_fn, pt_resnet50_optimizer, devi
         train_accuracy.to_csv("/content/gdrive/My Drive/colab/results/train_accuracy.csv")
         validation_accuracy.to_csv("/content/gdrive/My Drive/colab/results/validation_accuracy.csv")
 
-def fit_resnet(train_data_loader, model, loss_fn, resnet50_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
+def fit_resnet(train_data_loader, resnet50, loss_fn, resnet50_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
     if restart:
         with open("/content/gdrive/My Drive/colab/models/pcam_resnet50_last_epoch.txt", 'w') as f:
             f.write(str(0))
@@ -184,20 +184,20 @@ def fit_resnet(train_data_loader, model, loss_fn, resnet50_optimizer, device, ep
     
     if start_epoch > 0:
         load_model_path = "/content/gdrive/My Drive/colab/models/pcam_resnet50_epoch_" + str(start_epoch)
-        model.load_state_dict(torch.load(load_model_path))
+        resnet50.load_state_dict(torch.load(load_model_path))
 
     # Train up untill the required epoch
     print("Train ResNet50")
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        t_loss, t_accuracy = train_epoch(train_data_loader, model, loss_fn, resnet50_optimizer, device)    
+        t_loss, t_accuracy = train_epoch(train_data_loader, resnet50, loss_fn, resnet50_optimizer, device)    
         model_path = "/content/gdrive/My Drive/colab/models/pcam_resnet50_epoch_" + str(t+1)
-        torch.save(model.state_dict(), model_path)
+        torch.save(resnet50.state_dict(), model_path)
 
         with open("/content/gdrive/My Drive/colab/models/pcam_resnet50_last_epoch.txt", 'w') as f:
             f.write(str(t+1))
 
-        v_loss, v_accuracy = validation(validation_data_loader, model, loss_fn, device)
+        v_loss, v_accuracy = validation(validation_data_loader, resnet50, loss_fn, device)
         train_loss['resnet'][t] = t_loss
         validation_loss['resnet'][t] = v_loss
         train_accuracy['resnet'][t] = t_accuracy
@@ -245,7 +245,9 @@ def fit_deit(train_data_loader, model, loss_fn, optimizer, device, epochs, resta
 
 def train_epoch(dataloader, train_model, loss_fn, train_optimizer, device):
     size = len(dataloader.dataset)
+    train_optimizer = torch.optim.Adam(train_model.parameters(), lr=1e-3)
     train_model.train()
+    
     total_loss, total_correct = 0, 0    
     for batch, (X, y) in enumerate(dataloader):
         # Make sure the tensors are set to be processed by the correct device
@@ -255,21 +257,33 @@ def train_epoch(dataloader, train_model, loss_fn, train_optimizer, device):
         pred = train_model(X)
         loss = loss_fn(pred, y.unsqueeze(1).float())
         
+        # Backpropagation
+        train_optimizer.zero_grad()
+        loss.backward()
+        train_optimizer.step()
         
+
         # Performance tracking
         m = torch.sigmoid(pred)
         bin_pred = torch.round(m).transpose(0,1)
         total_correct += (bin_pred == y).type(torch.float).sum().item()
         total_loss += loss
         
-        # Backpropagation
-        train_optimizer.zero_grad()
-        loss.backward()
-        train_optimizer.step()
+        
 
-        if batch % 100 == 0:
+        if batch % 1000 == 0:
             loss, current = loss.item(), batch * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            tmp_num=0
+            for param in train_model.parameters():
+              print(param.data.sum())
+              print(param.grad.data.sum())
+              tmp_num+=1
+              if tmp_num > 9:
+                print("")
+                break
+
+        
     total_loss/=len(dataloader)
     total_correct/=size
 
@@ -277,15 +291,15 @@ def train_epoch(dataloader, train_model, loss_fn, train_optimizer, device):
             
 
 
-def validation(dataloader, model, loss_fn, device):
+def validation(dataloader, val_model, loss_fn, device):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
-    model.eval()
+    val_model.eval()
     test_loss, correct = 0, 0
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(device), y.to(device)
-            pred = model(X)
+            pred = val_model(X)
             m = torch.sigmoid(pred)
             bin_pred = torch.round(m).transpose(0,1)
             test_loss += loss_fn(pred, y.unsqueeze(1).float()).item()
