@@ -130,6 +130,7 @@ def fit_pt_resnet(train_data_loader, pt_resnet50, loss_fn, pt_resnet50_optimizer
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         # Decrease the learning rate and weight decay after training for 5 and 10 epochs
+        # This was left out in the optimized training run
         if t >=5:
           pt_resnet50_optimizer = torch.optim.Adam(pt_resnet50.parameters(), lr = 1e-4, weight_decay = 1e-5)
 
@@ -224,10 +225,10 @@ def fit_resnet(train_data_loader, resnet50, loss_fn, resnet50_optimizer, device,
 
 def train_epoch(dataloader, train_model, loss_fn, train_optimizer, device):
     size = len(dataloader.dataset)
-    train_optimizer = torch.optim.Adam(train_model.parameters(), lr=1e-3)
     train_model.train()
     
     total_loss, total_correct = 0, 0    
+    # Loop over the batches in the dataloader
     for batch, (X, y) in enumerate(dataloader):
         # Make sure the tensors are set to be processed by the correct device
         X, y = X.to(device), y.to(device)
@@ -249,7 +250,7 @@ def train_epoch(dataloader, train_model, loss_fn, train_optimizer, device):
         total_loss += loss
         
         
-
+        # Print loss function and several model parameters every 100 batches.
         if batch % 100 == 0:
             loss, current = loss.item(), batch * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
@@ -269,12 +270,15 @@ def train_epoch(dataloader, train_model, loss_fn, train_optimizer, device):
     total_loss/=len(dataloader)
     total_correct/=size
 
+    # Return the total training loss and accuracy of this epoch
     return total_loss.item(), (total_correct*100)
 
+# Initialize the (baseline) experiment
 class Experiment():
     def __init__(self, epochs, restart):
         self.num_epochs = epochs
         self.restart = restart
+        # Create empty results dataframes when restarting the experiment.
         if self.restart:
             self.train_loss = pd.DataFrame(index=range(self.num_epochs), columns=['convnet', 'ft_resnet', 'pt_resnet', 'resnet'])
             self.validation_loss = pd.DataFrame(index=range(self.num_epochs), columns=['convnet', 'ft_resnet', 'pt_resnet', 'resnet'])
@@ -286,9 +290,10 @@ class Experiment():
             self.train_accuracy = pd.read_csv("/content/gdrive/My Drive/colab/results/train_accuracy.csv")
             self.validation_accuracy = pd.read_csv("/content/gdrive/My Drive/colab/results/validation_accuracy.csv")
 
+    # This method starts training
     def run(self, train_data_loader, conv_model, ft_resnet50, pt_resnet50, resnet50, loss_fn, conv_optimizer, ft_resnet50_optimizer, pt_resnet50_optimizer, resnet50_optimizer, device, validation_data_loader):
         if self.restart:
-          # Save starting epochs for interrupted training
+          # Keep track of starting epochs for interrupted training
           with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
               f.write(str(0))
           with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_last_epoch.txt", 'w') as f:
@@ -297,7 +302,7 @@ class Experiment():
               f.write(str(0))
           with open("/content/gdrive/My Drive/colab/models/pcam_resnet50_last_epoch.txt", 'w') as f:
               f.write(str(0))
-          # Save the best performing validation loss for interrupted training
+          # Keep track of the best performing validation loss for interrupted training
           with open("/content/gdrive/My Drive/colab/models/pcam_conv_best_val_loss.txt", 'w') as f:
               f.write(str(100))
           with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_best_val_loss.txt", 'w') as f:
@@ -306,6 +311,8 @@ class Experiment():
               f.write(str(100))
           with open("/content/gdrive/My Drive/colab/models/pcam_resnet50_best_val_loss.txt", 'w') as f:
               f.write(str(100))
+        
+        # Train the different models for the required amount of epochs      
         fit_convnet(train_data_loader, conv_model, loss_fn, conv_optimizer, device, self.num_epochs, self.restart, validation_data_loader, self.train_loss, self.validation_loss, self.train_accuracy, self.validation_accuracy)
         fit_ft_resnet(train_data_loader, ft_resnet50, loss_fn, ft_resnet50_optimizer, device, self.num_epochs, self.restart, validation_data_loader, self.train_loss, self.validation_loss, self.train_accuracy, self.validation_accuracy)
         fit_pt_resnet(train_data_loader, pt_resnet50, loss_fn, pt_resnet50_optimizer, device, self.num_epochs, self.restart, validation_data_loader, self.train_loss, self.validation_loss, self.train_accuracy, self.validation_accuracy)

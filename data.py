@@ -1,8 +1,11 @@
+# Generate data loaders with incorporated data augmentation
 def load_data():
+    
+    # Mounts my Google Drive to Colab
     from google.colab import drive
     drive.mount('/content/gdrive')
 
-    ### If the download of Google Drive is blocked
+    ### Copy all the data sets from Drive to Colab
 
     # Train
 
@@ -36,6 +39,7 @@ def load_data():
         split = "train",
         root="data",
         download=True,
+        # Define data augmentations (are re-augmented each epoch)
         transform=transforms.Compose([transforms.RandomRotation(degrees=(0, 180)),
                                     transforms.RandomHorizontalFlip(p=0.5),
                                     transforms.RandomVerticalFlip(p=0.5),
@@ -47,7 +51,7 @@ def load_data():
     
     )
 
-    # Adapted after I found out about the mixup
+    # After an MD5 Checksum error, I had to rename the data files, the validation and test were switched
     validation_data = datasets.PCAM(
         split = "test",
         root="data",
@@ -55,7 +59,6 @@ def load_data():
         transform=transforms.Compose([ToTensor()])
     )
 
-    # Adapted after I found out about the mixup
     test_data = datasets.PCAM(
         split = "val",
         root="data",
