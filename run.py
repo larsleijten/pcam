@@ -24,7 +24,6 @@ from test import validation, tta_test
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 
-
 # Define and initialize the different models
 
 # Define a loss function (general across all models)
@@ -78,7 +77,6 @@ resnet50_optimizer = torch.optim.Adam(resnet50.parameters(), lr = 1e-3, weight_d
 
 # Load data 
 train_data_loader, validation_data_loader, test_data_loader = load_data()
-
 
 # Define if the training process should restart or use the latest saved model. 
 restart = True
