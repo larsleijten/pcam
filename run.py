@@ -89,6 +89,9 @@ random.seed(128)
 experiment = Experiment(epochs, restart)
 experiment.run(train_data_loader, conv_model, ft_resnet50, pt_resnet50, resnet50, loss_fn, conv_optimizer, ft_resnet50_optimizer, pt_resnet50_optimizer, resnet50_optimizer, device, validation_data_loader)
 
+# Load the parameters from the best performing model
+load_model_path = "/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_best_epoch"
+pt_resnet50.load_state_dict(torch.load(load_model_path))
 
 # Run inference with Test Time Augmentation
 test_predictions = tta_test(test_data_loader, pt_resnet50, loss_fn, device)
