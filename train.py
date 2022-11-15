@@ -1,10 +1,8 @@
 # In this file, the functions are set up for training the different networks
 # Models are always loaded from the latest epoch and saved each epoch, to account for interrupted training. 
 
-def fit_convnet(train_data_loader, conv_model, loss_fn, conv_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
+def fit_convnet(train_data_loader, conv_model, loss_fn, conv_optimizer, device, epochs, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
     # Load the model from the latest trained epoch  
-    
-  
     with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt") as f:
         start_epoch = int(f.readlines()[0])
     
@@ -13,28 +11,35 @@ def fit_convnet(train_data_loader, conv_model, loss_fn, conv_optimizer, device, 
         conv_model.load_state_dict(torch.load(load_model_path))
 
 
-    # For saving best epoch
+    # Keep track of the best performance on the validation set
     with open("/content/gdrive/My Drive/colab/models/pcam_conv_best_val_loss.txt") as f:
       best_v_loss = float(f.readlines()[0])
 
-    # Train up untill the required epoch
+    # Train untill the required epoch
     print("Convnet")
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
+        # Decrease the learning rate and weight decay after training for 5 and 10 epochs
         if t >=5:
           conv_optimizer = torch.optim.Adam(conv_model.parameters(), lr = 1e-4, weight_decay = 1e-5)
 
         if t >=10:
           conv_optimizer = torch.optim.Adam(conv_model.parameters(), lr = 1e-5, weight_decay = 1e-6)
 
+        # Train a single epoch
         t_loss, t_accuracy = train_epoch(train_data_loader, conv_model, loss_fn, conv_optimizer, device)    
+        
+        # Save model parameters
         model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_epoch_" + str(t+1)
         torch.save(conv_model.state_dict(), model_path)
 
         with open("/content/gdrive/My Drive/colab/models/pcam_conv_last_epoch.txt", 'w') as f:
             f.write(str(t+1))
-    
+
+        # Check performance on the validation set
         v_loss, v_accuracy = validation(validation_data_loader, conv_model, loss_fn, device)
+
+        # Save training and validation set performance
         train_loss.loc[t, 'convnet'] = t_loss
         validation_loss.loc[t, 'convnet'] = v_loss
         train_accuracy.loc[t, 'convnet'] = t_accuracy
@@ -44,7 +49,7 @@ def fit_convnet(train_data_loader, conv_model, loss_fn, conv_optimizer, device, 
         train_accuracy.to_csv("/content/gdrive/My Drive/colab/results/train_accuracy.csv")
         validation_accuracy.to_csv("/content/gdrive/My Drive/colab/results/validation_accuracy.csv")
         
-        # Save best epoch
+        # Save state dict of best performing epoch
         if v_loss < best_v_loss:
           best_v_loss = v_loss
           model_path = "/content/gdrive/My Drive/colab/models/pcam_conv_best_epoch"
@@ -53,6 +58,7 @@ def fit_convnet(train_data_loader, conv_model, loss_fn, conv_optimizer, device, 
             f.write(str(best_v_loss))
 
 def fit_ft_resnet(train_data_loader, ft_resnet50, loss_fn, ft_resnet50_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
+    # Load the model from the latest trained epoch  
     with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_last_epoch.txt") as f:
         start_epoch = int(f.readlines()[0])
     
@@ -60,28 +66,35 @@ def fit_ft_resnet(train_data_loader, ft_resnet50, loss_fn, ft_resnet50_optimizer
         load_model_path = "/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_epoch_" + str(start_epoch)
         ft_resnet50.load_state_dict(torch.load(load_model_path))
 
-    # For saving best epoch
+    # Keep track of the best performance on the validation set
     with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_best_val_loss.txt") as f:
       best_v_loss = float(f.readlines()[0])  
 
-    # Train up untill the required epoch
+    # Train untill the required epoch
     print("Finetune ResNet50")
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
+        # Decrease the learning rate and weight decay after training for 5 and 10 epochs
         if t >=5:
           ft_resnet50_optmizer = torch.optim.Adam(ft_resnet50.fc.parameters(), lr = 1e-4, weight_decay = 1e-5)
 
         if t >=10:
           ft_resnet50_optimizer = torch.optim.Adam(ft_resnet50.fc.parameters(), lr = 1e-5, weight_decay = 1e-6)
         
+        # Train a single epoch
         t_loss, t_accuracy = train_epoch(train_data_loader, ft_resnet50, loss_fn, ft_resnet50_optimizer, device)    
+        
+        # Save model parameters
         model_path = "/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_epoch_" + str(t+1)
         torch.save(ft_resnet50.state_dict(), model_path)
 
         with open("/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_last_epoch.txt", 'w') as f:
             f.write(str(t+1))
 
+        # Check performance on the validation set
         v_loss, v_accuracy = validation(validation_data_loader, ft_resnet50, loss_fn, device)
+        
+        # Save training and validation set performance
         train_loss.loc[t, 'ft_resnet'] = t_loss
         validation_loss.loc[t, 'ft_resnet'] = v_loss
         train_accuracy.loc[t, 'ft_resnet'] = t_accuracy
@@ -91,7 +104,7 @@ def fit_ft_resnet(train_data_loader, ft_resnet50, loss_fn, ft_resnet50_optimizer
         train_accuracy.to_csv("/content/gdrive/My Drive/colab/results/train_accuracy.csv")
         validation_accuracy.to_csv("/content/gdrive/My Drive/colab/results/validation_accuracy.csv")
 
-        # Save best epoch
+        # Save state dict of best performing epoch
         if v_loss < best_v_loss:
           best_v_loss = v_loss
           model_path = "/content/gdrive/My Drive/colab/models/pcam_ft_resnet50_best_epoch"
@@ -100,6 +113,7 @@ def fit_ft_resnet(train_data_loader, ft_resnet50, loss_fn, ft_resnet50_optimizer
             f.write(str(best_v_loss))
 
 def fit_pt_resnet(train_data_loader, pt_resnet50, loss_fn, pt_resnet50_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
+    # Load the model from the latest trained epoch  
     with open("/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_last_epoch.txt") as f:
         start_epoch = int(f.readlines()[0])
     
@@ -107,27 +121,35 @@ def fit_pt_resnet(train_data_loader, pt_resnet50, loss_fn, pt_resnet50_optimizer
         load_model_path = "/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_epoch_" + str(start_epoch)
         pt_resnet50.load_state_dict(torch.load(load_model_path))
 
-    # For saving best epoch
+    # Keep track of the best performance on the validation set
     with open("/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_best_val_loss.txt") as f:
       best_v_loss = float(f.readlines()[0])  
 
-    # Train up untill the required epoch
+    # Train untill the required epoch
     print("Retrain pretrained ResNet50")
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        #if t >=5:
-         # pt_resnet50_optimizer = torch.optim.Adam(pt_resnet50.parameters(), lr = 1e-4, weight_decay = 1e-5)
+        # Decrease the learning rate and weight decay after training for 5 and 10 epochs
+        if t >=5:
+          pt_resnet50_optimizer = torch.optim.Adam(pt_resnet50.parameters(), lr = 1e-4, weight_decay = 1e-5)
 
         if t >=10:
           pt_resnet50_optimizer = torch.optim.Adam(pt_resnet50.parameters(), lr = 1e-5, weight_decay = 1e-6)
+        
+        # Train a single epoch
         t_loss, t_accuracy = train_epoch(train_data_loader, pt_resnet50, loss_fn, pt_resnet50_optimizer, device)    
+        
+        # Save model parameters
         model_path = "/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_epoch_" + str(t+1)
         torch.save(pt_resnet50.state_dict(), model_path)
 
         with open("/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_last_epoch.txt", 'w') as f:
             f.write(str(t+1))
 
+        # Check performance on the validation set
         v_loss, v_accuracy = validation(validation_data_loader, pt_resnet50, loss_fn, device)
+        
+        # Save training and validation set performance
         train_loss.loc[t, 'pt_resnet'] = t_loss
         validation_loss.loc[t, 'pt_resnet'] = v_loss
         train_accuracy.loc[t, 'pt_resnet'] = t_accuracy
@@ -137,7 +159,7 @@ def fit_pt_resnet(train_data_loader, pt_resnet50, loss_fn, pt_resnet50_optimizer
         train_accuracy.to_csv("/content/gdrive/My Drive/colab/results/train_accuracy.csv")
         validation_accuracy.to_csv("/content/gdrive/My Drive/colab/results/validation_accuracy.csv")
 
-        # Save best epoch
+        # Save state dict of best performing epoch
         if v_loss < best_v_loss:
           best_v_loss = v_loss
           model_path = "/content/gdrive/My Drive/colab/models/pcam_pt_resnet50_best_epoch"
@@ -146,6 +168,7 @@ def fit_pt_resnet(train_data_loader, pt_resnet50, loss_fn, pt_resnet50_optimizer
             f.write(str(best_v_loss))
 
 def fit_resnet(train_data_loader, resnet50, loss_fn, resnet50_optimizer, device, epochs, restart, validation_data_loader, train_loss, validation_loss, train_accuracy, validation_accuracy):
+    # Load the model from the latest trained epoch  
     with open("/content/gdrive/My Drive/colab/models/pcam_resnet50_last_epoch.txt") as f:
         start_epoch = int(f.readlines()[0])
     
@@ -153,27 +176,35 @@ def fit_resnet(train_data_loader, resnet50, loss_fn, resnet50_optimizer, device,
         load_model_path = "/content/gdrive/My Drive/colab/models/pcam_resnet50_epoch_" + str(start_epoch)
         resnet50.load_state_dict(torch.load(load_model_path))
 
-    # For saving best epoch
+    # Keep track of the best performance on the validation set
     with open("/content/gdrive/My Drive/colab/models/pcam_resnet50_best_val_loss.txt") as f:
       best_v_loss = float(f.readlines()[0])  
 
-    # Train up untill the required epoch
+    # Train untill the required epoch
     print("Train ResNet50")
     for t in range(start_epoch, epochs):
         print(f"Epoch {t+1}\n-------------------------------")
+        # Decrease the learning rate and weight decay after training for 5 and 10 epochs
         if t >=5:
           resnet50_optimizer = torch.optim.Adam(resnet50.parameters(), lr = 1e-4, weight_decay = 1e-5)
 
         if t >=10:
           resnet50_optimizer = torch.optim.Adam(resnet50.parameters(), lr = 1e-5, weight_decay = 1e-6)
+        
+        # Train a single epoch
         t_loss, t_accuracy = train_epoch(train_data_loader, resnet50, loss_fn, resnet50_optimizer, device)    
+        
+        # Save model parameters
         model_path = "/content/gdrive/My Drive/colab/models/pcam_resnet50_epoch_" + str(t+1)
         torch.save(resnet50.state_dict(), model_path)
 
         with open("/content/gdrive/My Drive/colab/models/pcam_resnet50_last_epoch.txt", 'w') as f:
             f.write(str(t+1))
 
+        # Check performance on the validation set
         v_loss, v_accuracy = validation(validation_data_loader, resnet50, loss_fn, device)
+        
+        # Save training and validation set performance
         train_loss.loc[t, 'resnet'] = t_loss
         validation_loss.loc[t, 'resnet'] = v_loss
         train_accuracy.loc[t, 'resnet'] = t_accuracy
@@ -183,7 +214,7 @@ def fit_resnet(train_data_loader, resnet50, loss_fn, resnet50_optimizer, device,
         train_accuracy.to_csv("/content/gdrive/My Drive/colab/results/train_accuracy.csv")
         validation_accuracy.to_csv("/content/gdrive/My Drive/colab/results/validation_accuracy.csv")
 
-        # Save best epoch
+        # Save state dict of best performing epoch
         if v_loss < best_v_loss:
           best_v_loss = v_loss
           model_path = "/content/gdrive/My Drive/colab/models/pcam_resnet50_best_epoch"
